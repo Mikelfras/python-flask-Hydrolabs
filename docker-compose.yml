@@ -1,0 +1,12 @@
+version: '3.8'
+
+services:
+
+  api:
+    build:
+      context: ./src/api
+      dockerfile: Dockerfile
+    volumes:
+      - './src/api:/usr/src/app'
+    ports:
+      - 5004:5000
