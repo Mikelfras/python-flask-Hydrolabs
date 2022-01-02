@@ -61,9 +61,9 @@ def image_analysis(r,storageBucket):
     verificationDict = {'size': [open_cv_image.shape[0], open_cv_image.shape[1]],'duration':duration,'userweight':userWeight}
     #These template objects never change, but are loaded each time the current
     #script runs, they may be able to be saved in memory.
-    template = cv2.imread('./routes/process_endpoint/masks/blueTemplate.png')
-    mask = cv2.imread('./routes/process_endpoint/masks/blueTemplate.png')
-    ring =cv2.imread('./routes/process_endpoint/masks/blueTemplate.png')
+    template = cv2.imread('./routes/process/masks/blueTemplate.png')
+    mask = cv2.imread('./routes/process/masks/blueTemplate.png')
+    ring =cv2.imread('./routes/process/masks/blueTemplate.png')
     #this is always the same.
     tempIm, junk = image_library.imageStandardize(template, 800)
     mask, junk = image_library.imageStandardize(mask, 800)
@@ -71,7 +71,34 @@ def image_analysis(r,storageBucket):
     tempImB = image_library.colorFilter(tempIm, plot=False)
     img, x = image_library.imageStandardize(open_cv_image, 800)
     imgB = image_library.colorFilter(img, plot=False)
-    maxV, sM, xM, yM = object_match.findScale(imgB, tempImB, 30, 60, 2, showPlot=False)
+    #Filter an image that is all blue, or all black
+
+    bluePix = sum(sum(imgB))
+    [x,y] = imgB.shape
+    totalPix = x*y
+    if (bluePix/totalPix) > .85:
+        resultDict = {
+        "userWeight": userWeight,
+        "passFail": False,
+        "status": 500,
+        "message": 'The image is too dark, the patch could not be identified'
+        }
+        resp = jsonify(resultDict)
+        resp.status_code= 500
+        return resp
+    if (bluePix/totalPix) < .05:
+        resultDict = {
+        "userWeight": userWeight,
+        "passFail": False,
+        "status": 500,
+        "message": 'The image is too blue or bright, the patch could not be identified'
+        }
+        resp = jsonify(resultDict)
+        resp.status_code= 500
+        return resp
+
+    maxV, sM, xM, yM = object_match.findScale(imgB, tempImB, 30, 65, 2, showPlot=False)
+    #Adjusting the stop to 65 from 60. some images are not be caught
     height = imgB.shape[0]
     imageDownScale = 150/height
     xPos = int(xM/imageDownScale)
@@ -93,9 +120,11 @@ def image_analysis(r,storageBucket):
     finalResult, totalPix, areaROI, totalRegions, labelsMasked = image_library.regionFilter(
         maxi_coords, markers, croppedAndRotatedImg, fullMask, img, plot=False)
     utils.store_array_image(storageBucket,'final',croppedAndRotatedImg*255,uid)
-    passFail = True
-    if (finalResult < 0.15) or (totalRegions < 18) or (maxV < 0.45):
-        passFail = 0
+    passed = True
+    print({'finalResult':finalResult,'totalRegions':totalRegions,'maxV':maxV})
+    if (finalResult < 0.15) or (maxV < 0.35):
+        print('failed on '+uid)
+        passed = False
         #return {"message":'image failed to process, check quality of image',"status":500}
     userWeight = int(userWeight)
     duration = int(duration)
@@ -109,14 +138,20 @@ def image_analysis(r,storageBucket):
         "massLoss": massLoss,
         "totalLoss": totalLoss,
         "sodLoss": sodLoss,
-        "passFail": passFail,
+        "passFail": passed,
         "status": 200,
         "message": 'successfully processed the image'
     }
-    if resultDict['status'] == 500:
-        app.logger.error('poor quality image')
-        return resultDict['message'], resultDict['status']
+    if passed == False:
+        resultDict['status'] = 500
+        resultDict['message'] = 'Poor image quality, failed!'
+        #app.logger.error('poor quality image')
     resultDict.update(verificationDict)
+
     resp = jsonify(resultDict)
-    resp.status_code= 200;
+
+    if passed:
+        resp.status_code= 200
+    else:
+        resp.status_code=500
     return resp

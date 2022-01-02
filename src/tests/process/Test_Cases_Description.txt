@@ -1,0 +1,22 @@
+image_1_Pass.jpeg
+    Duration: 120, bodyweight: 165
+    Result should return a pass, with 10oz/hr as the Result
+image_2_Pass.jpeg
+    Duration: 120, bodyweight: 165
+    Result should return a pass, with 10oz/hr as the Result
+image_3_pass.jpeg
+    Duration: 120, bodyweight: 165
+    Result should return a fail, with a color error as a response
+    {if the image is washed out, all black or all white, then the lighting is really poor}
+image_4_fail.jpeg
+    Duration: 120, bodyweight: 165
+     Result should return a fail, with a color error as a response
+    {if the image is washed out, all black or all white, then the lighting is really poor}
+image_5_fail.jpeg
+    Duration: 120, bodyweight: 165
+    Result should return a fail, with a glare error?
+    
+image_6_pass.jpeg
+    Duration: 120, bodyweight: 165
+    Result should return a pass, with 10oz/hr as the Result
+    

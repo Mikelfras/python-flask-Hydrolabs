@@ -1,5 +1,5 @@
 import requests
-api_url = ''
+api_url='http://192.168.1.2:5004'
 
 def test_get():
     assert requests.get(api_url).status_code==200
