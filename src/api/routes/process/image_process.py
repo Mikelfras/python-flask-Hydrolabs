@@ -121,7 +121,7 @@ def image_analysis(r,storageBucket):
         maxi_coords, markers, croppedAndRotatedImg, fullMask, img, plot=False)
     utils.store_array_image(storageBucket,'final',croppedAndRotatedImg*255,uid)
     passed = True
-    print({'finalResult':finalResult,'totalRegions':totalRegions,'maxV':maxV})
+    
     if (finalResult < 0.15) or (maxV < 0.35):
         print('failed on '+uid)
         passed = False
@@ -129,6 +129,7 @@ def image_analysis(r,storageBucket):
     userWeight = int(userWeight)
     duration = int(duration)
     massLoss = loss.estimateMassLoss(finalResult)
+    print({'finalResult':finalResult,'totalRegions':totalRegions,'maxV':maxV,'uid':uid})
     totalLoss, rate, massLoss = loss.adjustByRate(massLoss, duration, userWeight)
     sodLoss = loss.electrolyteLoss(totalLoss, rate)
     #Put results into dictionary
@@ -142,6 +143,7 @@ def image_analysis(r,storageBucket):
         "status": 200,
         "message": 'successfully processed the image'
     }
+    print(resultDict)
     if passed == False:
         resultDict['status'] = 500
         resultDict['message'] = 'Poor image quality, failed!'
