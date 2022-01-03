@@ -62,8 +62,8 @@ def image_analysis(r,storageBucket):
     #These template objects never change, but are loaded each time the current
     #script runs, they may be able to be saved in memory.
     template = cv2.imread('./routes/process/masks/blueTemplate.png')
-    mask = cv2.imread('./routes/process/masks/blueTemplate.png')
-    ring =cv2.imread('./routes/process/masks/blueTemplate.png')
+    mask = cv2.imread('./routes/process/masks/Hex Mask.png')
+    ring =cv2.imread('./routes/process/masks/Ring.png')
     #this is always the same.
     tempIm, junk = image_library.imageStandardize(template, 800)
     mask, junk = image_library.imageStandardize(mask, 800)
@@ -75,8 +75,8 @@ def image_analysis(r,storageBucket):
 
     bluePix = sum(sum(imgB))
     [x,y] = imgB.shape
-    totalPix = x*y
-    if (bluePix/totalPix) > .85:
+    tPix = x*y
+    if (bluePix/tPix) > .85:
         resultDict = {
         "userWeight": userWeight,
         "passFail": False,
@@ -86,7 +86,7 @@ def image_analysis(r,storageBucket):
         resp = jsonify(resultDict)
         resp.status_code= 500
         return resp
-    if (bluePix/totalPix) < .05:
+    if (bluePix/tPix) < .05:
         resultDict = {
         "userWeight": userWeight,
         "passFail": False,
@@ -105,12 +105,14 @@ def image_analysis(r,storageBucket):
     yPos = int(yM/imageDownScale)
     fullMask, croppedAndRotatedImg, internalMask = object_match.imageScaleRotate(
         imgB, mask, sM, 0, xPos, yPos, showPlot=False)
+    savedFullMask = fullMask
     fullMaskRing, croppedAndRotatedImg, externalMask = object_match.imageScaleRotate(
         imgB, ring, sM, 0, xPos, yPos, showPlot=False)
     #print('failed on file: '+file)
     maxi_coordsIn, markersIn = image_library.keyPointIdByMaxima(internalMask)
     maxi_coordsOut, markersOut = image_library.keyPointIdByMaxima(
         externalMask, prox=5, num_peaks=200)
+    
     yArray = np.append(maxi_coordsIn[0], maxi_coordsOut[0])
     xArray = np.append(maxi_coordsIn[1], maxi_coordsOut[1])
     maxi_coords = (yArray, xArray)
@@ -120,8 +122,10 @@ def image_analysis(r,storageBucket):
     finalResult, totalPix, areaROI, totalRegions, labelsMasked = image_library.regionFilter(
         maxi_coords, markers, croppedAndRotatedImg, fullMask, img, plot=False)
     utils.store_array_image(storageBucket,'final',croppedAndRotatedImg*255,uid)
+    utils.store_array_image(storageBucket,'mask',fullMask*255,uid)
+    utils.store_array_image(storageBucket,'internalMask',internalMask*255,uid)
+    utils.store_array_image(storageBucket,'externalMask',externalMask*255,uid)
     passed = True
-    
     if (finalResult < 0.15) or (maxV < 0.35):
         print('failed on '+uid)
         passed = False
@@ -129,7 +133,7 @@ def image_analysis(r,storageBucket):
     userWeight = int(userWeight)
     duration = int(duration)
     massLoss = loss.estimateMassLoss(finalResult)
-    print({'finalResult':finalResult,'totalRegions':totalRegions,'maxV':maxV,'uid':uid})
+    print({'finalResult':finalResult,'totalRegions':totalRegions,'maxV':maxV,'uid':uid,'area':areaROI,'totalPix':totalPix,'sM':sM,'sumFullMask':fullMask.sum()})
     totalLoss, rate, massLoss = loss.adjustByRate(massLoss, duration, userWeight)
     sodLoss = loss.electrolyteLoss(totalLoss, rate)
     #Put results into dictionary

@@ -71,6 +71,16 @@ def test_image_6_pass():
     print(response.text)
     #assert(response.json=={})
     img['image'].close()
+def test_image_7_pass():
+    passCase = 200
+    image_path = (base_path / "image_7_pass.jpeg").resolve()
+    img = {'image': open(image_path,'rb')}
+    payload= {'bodyweight' : 165, 'duration': 150,'id':700}
+    response = requests.post(url, files=img, data=payload)
+    assert response.status_code == passCase 
+    print(response.text)
+    #assert(response.json=={})
+    img['image'].close()
 #test response
 def test_response():
     assert requests.get(url).status_code == 405
