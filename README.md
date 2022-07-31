@@ -1,4 +1,4 @@
-#Hydrolabs Simple API
+# Hydrolabs Simple API
 Howdy!
 
 Alright, the first time I did this, I didnt do a good job documenting. This time around I 
