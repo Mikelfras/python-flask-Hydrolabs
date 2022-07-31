@@ -9,14 +9,19 @@ To run on your local machine:
 You'll need to install docker https://www.docker.com 
 Once you have docker running, and you've opened the project run: `docker compose up`
 
-To test, cd into src/tests/process, and run: pytest
+This will start the container, which you can likely access the logs in your code enviroment, or through docker. 
+
+To test, cd into `src/tests/process`, and run: `pytest`
+to run, you may need to change the address to `addr = "http://127.0.0.1:5004"`
+all images should pass as is - if they fail for any reason something has gone wrong, and the debugging associated with the test functions may be useful.
+
 To test other images, debug, or otherwise use the api locally, the process_test.py shows several examples on how to run different commands.
 
 Deploy steps:
 when building to deploy use this if on an M1 mac: --platform linux/amd64
 full command:
- docker build --platform linux/amd64 . --tag gcr.io/hydrosis-beta/hydrolabs_api
- docker push gcr.io/hydrosis-beta/hydrolabs_api 
+ `docker build --platform linux/amd64 . --tag gcr.io/hydrosis-beta/hydrolabs_api
+ docker push gcr.io/hydrosis-beta/hydrolabs_api` 
 
 Guide: https://cloud.google.com/run/docs/building/containers?authuser=1
 
