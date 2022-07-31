@@ -4,7 +4,8 @@ base_path = Path(__file__).parent
 fail_case = (base_path / "image.JPG").resolve()
 
 #addr = 'https://api.hydrolabs.com'
-addr = 'http://192.168.1.2:5004'
+#addr = 'http://192.168.1.2:5004'
+addr = "http://127.0.0.1:5004"
 url = addr + '/api/process'
 def test_image_1_pass():
     passCase = 200
