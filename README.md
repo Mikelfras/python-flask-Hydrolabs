@@ -5,6 +5,13 @@ Alright, the first time I did this, I didnt do a good job documenting. This time
 hope I've done a _little_ better. If you need help, email me: mikel.f.larson@gmail.com
 I will help you :) 
 
+To run on your local machine:
+You'll need to install docker https://www.docker.com 
+Once you have docker running, and you've opened the project run: `docker compose up`
+
+To test, cd into src/tests/process, and run: pytest
+To test other images, debug, or otherwise use the api locally, the process_test.py shows several examples on how to run different commands.
+
 Deploy steps:
 when building to deploy use this if on an M1 mac: --platform linux/amd64
 full command:
