@@ -49,23 +49,23 @@ def hello(s):
     print(s)
 
 def image_analysis(r,storageBucket):
-    file = r.files['image']
-    payload = r.form.to_dict()
+    file = r.files['image'] #pulls the file out of the request 
+    payload = r.form.to_dict() # pulls the payload from the request
     uid = (payload['id'])
-    utils.store_image(storageBucket,uid=uid,image=file)
-    pil_image = Image.open(file.stream)
+    utils.store_image(storageBucket,uid=uid,image=file) #stores the image into the google storage bucket
+    pil_image = Image.open(file.stream)#load the image into a readable format from the request
     open_cv_image = np.array(pil_image) 
     open_cv_image = open_cv_image[:, :, ::-1].copy() #RGB to BGR
     userWeight = int(payload['bodyweight'])
     duration = int(payload['duration'])
-    verificationDict = {'size': [open_cv_image.shape[0], open_cv_image.shape[1]],'duration':duration,'userweight':userWeight}
+    verificationDict = {'size': [open_cv_image.shape[0], open_cv_image.shape[1]],'duration':duration,'userweight':userWeight} #creats a dictionary 
     #These template objects never change, but are loaded each time the current
     #script runs, they may be able to be saved in memory.
     template = cv2.imread('./routes/process/masks/blueTemplate.png')
     mask = cv2.imread('./routes/process/masks/Hex Mask.png')
     ring =cv2.imread('./routes/process/masks/Ring.png')
     #this is always the same.
-    tempIm, junk = image_library.imageStandardize(template, 800)
+    tempIm, junk = image_library.imageStandardize(template, 800) 
     mask, junk = image_library.imageStandardize(mask, 800)
     ring, junk = image_library.imageStandardize(ring, 800)
     tempImB = image_library.colorFilter(tempIm, plot=False)
@@ -86,6 +86,9 @@ def image_analysis(r,storageBucket):
         resp = jsonify(resultDict)
         resp.status_code= 500
         return resp
+        #This failure occures when the blue pixel count is less than 15% of the image, which generally occurs when the image is not 
+        # of the patch, when the patch is partially blocked, or when the image is very dark. 
+
     if (bluePix/tPix) < .05:
         resultDict = {
         "userWeight": userWeight,
@@ -96,6 +99,7 @@ def image_analysis(r,storageBucket):
         resp = jsonify(resultDict)
         resp.status_code= 500
         return resp
+        # this may occur with significant glare, or if the image is too close.
 
     maxV, sM, xM, yM = object_match.findScale(imgB, tempImB, 30, 65, 2, showPlot=False)
     #Adjusting the stop to 65 from 60. some images are not be caught
@@ -130,6 +134,9 @@ def image_analysis(r,storageBucket):
         print('failed on '+uid)
         passed = False
         #return {"message":'image failed to process, check quality of image',"status":500}
+        #This failure occures when the patch reading returns very little blue, which indicates glare, or an incomplete image
+        # If maxV is less than 0.35, the patch could not be identified in the image.
+        # If finalResult is less than 0.15, then part of the patch is blocked, due to lighting or other issues. 
     userWeight = int(userWeight)
     duration = int(duration)
     massLoss = loss.estimateMassLoss(finalResult)
@@ -150,8 +157,9 @@ def image_analysis(r,storageBucket):
     print(resultDict)
     if passed == False:
         resultDict['status'] = 500
-        resultDict['message'] = 'Poor image quality, failed!'
+        resultDict['message'] = 'Poor image quality, failed! this could be due blurring of the image, or that the patch image is skewed'
         #app.logger.error('poor quality image')
+        #pass is set above. 
     resultDict.update(verificationDict)
 
     resp = jsonify(resultDict)
